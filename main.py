@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding: latin-1
 from pyPdf import PdfFileWriter, PdfFileReader
 import email
 import imaplib
@@ -22,8 +23,9 @@ email_body = data[0][1] # here's the body, which is raw text of the whole email
 
 mail = email.message_from_string(email_body)
 
-f = open('testmail.pdf', 'w+')
-f.write(mail)
+f = open('testmail', 'w+')
+#f.write(mail) #inte moget än
+f.write(email_body)
 
 #print(mail)
 
