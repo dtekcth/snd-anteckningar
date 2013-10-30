@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# coding: latin-1
+# coding: UTF-8
 from pyPdf import PdfFileWriter, PdfFileReader
 import email
 import imaplib
