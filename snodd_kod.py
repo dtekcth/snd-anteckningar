@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # coding: UTF-8
 from email.parser import HeaderParser
+from subprocess import call
 import email
 import imaplib
 import os
-
+import re
+import string
+import glob
 
 
 def fetch_and_store():
@@ -23,7 +26,9 @@ def fetch_and_store():
          subject = header[0][1]
          parser = HeaderParser()
          msg = parser.parsestr(subject)
-         print (msg)
+         subjectline = "".join(re.findall(r'[0-9a-zA-Z\-]', msg["Subject"]))
+         if not os.path.exists(subjectline):
+              os.makedirs(subjectline)
          mail = email.message_from_string(email_body) 
          temp = m.store(emailid,'+FLAGS', '\\Seen')
          m.expunge()
@@ -34,6 +39,7 @@ def fetch_and_store():
          #print "["+mail["From"]+"] :" + mail["Subject"]
 
          #call("mkdir", data.
+         filenamelist = []
          for part in mail.walk():
 
              if part.get_content_maintype() == 'multipart':
@@ -41,13 +47,17 @@ def fetch_and_store():
              if part.get('Content-Disposition') is None:
                  continue
 
-             filename = part.get_filename()
-             att_path = os.path.join(detach_dir, filename)
-
+             filename = "".join(re.findall(r'[.0-9a-zA-Z\-]',part.get_filename()))
+             att_path = os.path.join(detach_dir + "/" + subjectline, filename)
+             filenamelist.append(filename)
              if not os.path.isfile(att_path) :
                  fp = open(att_path, 'wb')
                  fp.write(part.get_payload(decode=True))
                  fp.close()
+            
+         
+         call(["convert"] + glob.glob(subjectline + "/*") + ["{0}.pdf".format(subjectline)])
 
 
 fetch_and_store()
+
