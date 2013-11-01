@@ -27,8 +27,6 @@ f = open('testmail', 'w+')
 #f.write(mail) #inte moget än
 f.write(email_body)
 
-#print(mail)
-
 ###################
 #http://stackoverflow.com/questions/6225763/downloading-multiple-attachments-using-imaplib
 ###################
