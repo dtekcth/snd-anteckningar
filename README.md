@@ -1,16 +1,17 @@
 snd-anteckningar
 ================
 
-Python script that fetches pdf's from a mail server and merges them into one pdf
+Python script that fetches jpg's or a pdf from a mail server and merges every containing several jpgs to a pdf/mail.
 
 
 ========================= RUNNING DETAILS =========================
+The script is design to work with the courses ERE102, TMV216 and TDA
 
-You'll need pyPdf, imaplib and all of their dependencies (python etc.).
+You'll need Imagemagick and python
 
-If your linux/unix distribution does not provide a pyPdf package, you may consider to download the source (of a slightly modified pypdf) from here: https://github.com/PooSham/pypdf
+Imagemagick download: http://www.imagemagick.org/script/index.php
 
-If you have git installed, simply run this from the terminal: 
-git pull https://github.com/PooSham/pypdf.git
+The scrippt will first set up the folder structure needed.
+Then Download the attachments, compress them to a .pdf and place in "uppladdat" directory.
 
-This will fetch the latest version from https://github.com/PooSham/pypdf.git and put it in a folder called pypdf. 
+When all new emails are downloaded, an .html-file will be created with links to every downloaded file.
