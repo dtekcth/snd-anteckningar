@@ -1,5 +1,5 @@
 html { 
-  background: url(bg2.jpg) no-repeat center center fixed; 
+  background: url(bg.jpg) no-repeat center center fixed; 
   -webkit-background-size: cover;
   -moz-background-size: cover;
   -o-background-size: cover;
@@ -63,8 +63,8 @@ h1{
 
 	height: 50px; 
 	background: blue;
-	position: absolute; 
-	bottom: 50; 
+    position: relative;
+	bottom: 20px; 
 	width: 100%;
 
 	border: 1px solid black;
@@ -119,6 +119,7 @@ h1{
     -ms-flex-align: start;
     align-items: flex-start;
     padding: 30px;
+    padding-bottom: 70px;
     }
 
 .flex-item{
@@ -140,7 +141,7 @@ h1{
     border-radius: 7px;
     margin: 10px;
     background-color: rgba(255,255,255,.9);
-    width: 310px;
+    width: 30%;
     }
 li {
 	padding: 2px;

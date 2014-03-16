@@ -1,0 +1,4 @@
+# En antecknare per rad, email %space Kurskod %space namne
+# Kommentarer börjar med "# "
+# Nedan följer ett exempel på formatet:
+# email	courscode	Name
