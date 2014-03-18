@@ -58,7 +58,6 @@ def fetch_and_store():
             elif not checkSender(fromaddr) :
                 print "address does not exists"
                 sendEmail(name, fromaddr, subjectline, "1")      #Skickar ett mail till avsändaren om att dens mail haft fel format på rubriken
-            print checkSender(fromaddr)
         else:
             if not os.path.exists(subjectline):
                 os.makedirs(subjectline)
@@ -81,19 +80,22 @@ def fetch_and_store():
                     fp = open(att_path, 'wb')
                     fp.write(part.get_payload(decode=True))
                     fp.close()
-            
+
             var = checkSender(fromaddr)
             course = var[0]
             name = var[1]
             dest = "www/uppladdat/" + course + "/{0}.pdf".format(setFileName(name,subjectline))
-            dirs = os.listdir(format(subjectline))
-            if dirs[0].endswith(".jpg") :
-               call(["convert"] + glob.glob(subjectline + "/*") + [dest])
-               shutil.rmtree(subjectline)
-            elif dirs[0].endswith(".pdf") and len(dirs) == 1 :
-               path = subjectline + "/" + dirs[0]
-               shutil.move(path,dest)
-               shutil.rmtree(subjectline)
+            convertStoredToPdf(subjectline, dest)
+
+def convertStoredToPdf(dirName, destName) :
+    pdfArray = [os.path.basename(path) for path in glob.glob(dirName + "/*.pdf")]
+    if len(pdfArray) == 1 :
+        path = dirName + "/" + pdfArray[0]
+        shutil.move(path,destName)
+    else :
+        call(["convert"] + glob.glob(dirName + "/*.jpg") + [destName])
+    shutil.rmtree(dirName)
+
 
 # Creates a HTML-Page
 def createHTML():
@@ -123,7 +125,7 @@ def checkSender(string) :
     lines = f.readlines()
     f.close()
     for emailAddress in lines :
-        splitted = re.split(r'\t+', emailAddress.rstrip('\t\n'))
+        splitted = re.split(r'\s+', emailAddress.rstrip('\s\n'))
         if not splitted[0] == '#' :
             if splitted[0] == string:
                 return splitted[1:]
