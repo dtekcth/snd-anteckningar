@@ -13,7 +13,7 @@ import shutil
 import base64
 from time import gmtime, strftime
 
-
+senders = dict()
 #Creates a dir for every course in sender.txt
 def init_script():
     f = open('sender.txt')
@@ -22,9 +22,9 @@ def init_script():
     for emailAddress in lines :
         splitted = re.split(r'\s+', emailAddress.rstrip('\t\n'))
         if not splitted[0][:1] == '#' :
+            senders[splitted[0]] = (splitted[1], splitted[2])
             if not os.path.exists("www/uppladdat/{0}".format(splitted[1])):
                 os.makedirs("www/uppladdat/{0}".format(splitted[1]))
-
 #Fetches the email attachment, and complise multiple .jpg's to a .pdf
 def fetch_and_store():
     detach_dir = '.'
@@ -36,8 +36,8 @@ def fetch_and_store():
     items = items[0].split()
 
     for emailid in items:
-        resp, data = m.fetch(emailid, "(RFC822)") 
-        email_body = data[0][1] 
+        resp, data = m.fetch(emailid, "(RFC822)")
+        email_body = data[0][1]
         resp2, header = m.fetch(emailid, '(BODY[HEADER.FIELDS (SUBJECT)])')
         subject = header[0][1]
         parser = HeaderParser()
@@ -50,14 +50,14 @@ def fetch_and_store():
         name = parseaddr(mail['from'])[0]
         temp = m.store(emailid,'+FLAGS', '\\Seen')
         m.expunge()
-
-        if not parseSubLine(subjectline) and checkSender(fromaddr) :             #Ifall mailet har fel rubrik, går vi in här
+        sender = checkSender(fromaddr)
+        if not parseSubLine(subjectline) and not sender :             #Ifall mailet har fel rubrik, går vi in här
             if not parseSubLine(subjectline) :
-                print "wrong subjectline"
-                sendEmail(name, fromaddr, subjectline, "2")
-            elif not checkSender(fromaddr) :
-                print "address does not exists"
-                sendEmail(name, fromaddr, subjectline, "1")      #Skickar ett mail till avsändaren om att dens mail haft fel format på rubriken
+                print "Warning: Mail has wrong subject"
+                sendEmail(name, fromaddr, subjectline, "2")     #Skickar ett mail till avsändaren om att dess mail haft fel format på rubriken
+            elif not sender :
+                print "Warning: Address not in senders file"
+                sendEmail(name, fromaddr, subjectline, "1")     #Skickar ett mail till avsändaren om adressen inte finns i "sender.txt"-listan
         else:
             if not os.path.exists(subjectline):
                 os.makedirs(subjectline)
@@ -72,8 +72,8 @@ def fetch_and_store():
                     continue
                 if part.get('Content-Disposition') is None:
                     continue
-                                   
-                filename = "".join(re.findall(r'[.0-9a-zA-Z\-]',part.get_filename()))                 
+
+                filename = "".join(re.findall(r'[.0-9a-zA-Z\-]',part.get_filename()))
                 att_path = os.path.join(detach_dir + "/" + subjectline, filename)
                 filenamelist.append(filename)
                 if not os.path.isfile(att_path) :
@@ -81,10 +81,9 @@ def fetch_and_store():
                     fp.write(part.get_payload(decode=True))
                     fp.close()
 
-            var = checkSender(fromaddr)
-            course = var[0]
-            name = var[1]
-            dest = "www/uppladdat/" + course + "/{0}.pdf".format(setFileName(name,subjectline))
+            course = sender[0]
+            name = sender[1]
+            dest = "www/uppladdat/" + course + "/{0}.pdf".format(setFileName(sender,subjectline))
             convertStoredToPdf(subjectline, dest)
 
 def convertStoredToPdf(dirName, destName) :
@@ -120,16 +119,11 @@ def listFileHTML():
             string += str('</ul></div>')
     return string
 
-def checkSender(string) :
-    f = open('sender.txt')
-    lines = f.readlines()
-    f.close()
-    for emailAddress in lines :
-        splitted = re.split(r'\s+', emailAddress.rstrip('\s\n'))
-        if not splitted[0] == '#' :
-            if splitted[0] == string:
-                return splitted[1:]
-    return False
+def checkSender(mail) :
+    if mail in senders:
+        return senders[mail]
+    else:
+        return False
 
 def sortDir(dir) :
     return sorted(dir, key=lambda x: x.split('-')[1:4])
@@ -144,33 +138,35 @@ def parseSubLine(string):
         return True
     return False
 
-def setFileName(name,subjectline) :
+def setFileName(sender,subjectline) :
+    course = sender[0]
+    name = sender[1]
     splitted = subjectline.split("-")
     year = strftime("%Y", gmtime())
     date = "{0}-{1}".format(splitted[0],splitted[1])
     info = ""
     if len(splitted) > 2:
         info = "-{0}".format(splitted[2])
-    return "EEM076-{0}-{1}-{2}{3}".format(year,date,name,info)
+    return "{0}-{1}-{2}-{3}{4}".format(course,year,date,name,info)
 
 # Skickar ett mail om
-def sendEmail(name,toaddrs,subjectline,error): 
+def sendEmail(name,toaddrs,subjectline,error):
     fromaddr = 'dtekanteckningar@gmail.com'
     if error == "1" :
         errorMsg = "Detta beror på att denna mail ej är registrerad som antecknare. Hör av dig till snd@dtek.se så fixar dem det."
     elif error == "2" :
         errorMsg = "Rubriken: {0} på ditt mail har fel format. Formatet skall vara MM-DD exempel 03-12 för 12 Mars. Skicka ett nytt mail med rätt rubrik :)".format(subjectline)
-    msg = 'Hej {0}\n\n Uppladdningen av dina antecknignar gick fel.\n{1}\n\n MVH SND'.format(name,errorMsg) 
+    msg = 'Hej {0}\n\n Uppladdningen av dina antecknignar gick fel.\n{1}\n\n MVH SND'.format(name,errorMsg)
     sub = "Uppladdning av dina anteckingar gick fel"
- 
-    username = 'dtekanteckningar'  
-      
-    server = smtplib.SMTP('smtp.gmail.com:587')  
-    server.starttls()  
-    server.login(username,getPassword()) 
-    message = 'Subject: %s\n\n%s' % (sub, msg) 
-    server.sendmail(fromaddr, toaddrs, message)  
-    server.quit()  
+
+    username = 'dtekanteckningar'
+
+    server = smtplib.SMTP('smtp.gmail.com:587')
+    server.starttls()
+    server.login(username,getPassword())
+    message = 'Subject: %s\n\n%s' % (sub, msg)
+    server.sendmail(fromaddr, toaddrs, message)
+    server.quit()
 
 #Hämtar lösenordet till gmail-kontot
 def getPassword():
@@ -180,8 +176,7 @@ def getPassword():
         password = f.read()
     finally:
         f.close()
-    return base64.b64decode(password) 
-
+    return base64.b64decode(password)
 
 #### Här Börjar Programet ####
 init_script()
