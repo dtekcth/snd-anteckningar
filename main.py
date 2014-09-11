@@ -48,7 +48,7 @@ def fetch_and_store():
         from email.utils import parseaddr
         fromaddr = parseaddr(mail['from'])[1]
         name = parseaddr(mail['from'])[0]
-        #temp = m.store(emailid,'+FLAGS', '\\Seen')
+        temp = m.store(emailid,'+FLAGS', '\\Seen')
         m.expunge()
         sender = checkSender(fromaddr)
         if not parseSubLine(subjectline) and not sender :             #Ifall mailet har fel rubrik, går vi in här
@@ -80,7 +80,6 @@ def fetch_and_store():
                     fp = open(att_path, 'wb')
                     fp.write(part.get_payload(decode=True))
                     fp.close()
-            filenamelist.sort()
             course = sender[0]
             name = sender[1]
             dest = "www/uppladdat/" + course + "/{0}.pdf".format(setFileName(sender,subjectline))
@@ -92,7 +91,9 @@ def convertStoredToPdf(dirName, destName) :
         path = dirName + "/" + pdfArray[0]
         shutil.move(path,destName)
     else :
-        call(["convert"] + glob.glob(dirName + "/*.jpg") + [destName])
+        fileList = glob.glob(dirName + "/*.jpg")
+        fileList.sort()
+        call(["convert"] + fileList + [destName])
     shutil.rmtree(dirName)
 
 
