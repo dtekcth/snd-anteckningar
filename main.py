@@ -51,7 +51,7 @@ def fetch_and_store():
         temp = m.store(emailid,'+FLAGS', '\\Seen')
         m.expunge()
         sender = checkSender(fromaddr)
-        if not parseSubLine(subjectline) and not sender :             #Ifall mailet har fel rubrik, går vi in här
+        if not parseSubLine(subjectline) or not sender :             #Ifall mailet har fel rubrik, går vi in här
             if not parseSubLine(subjectline) :
                 print "Warning: Mail has wrong subject"
                 sendEmail(name, fromaddr, subjectline, "2")     #Skickar ett mail till avsändaren om att dess mail haft fel format på rubriken
